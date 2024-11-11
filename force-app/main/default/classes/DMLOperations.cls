@@ -162,15 +162,21 @@ public with sharing class DMLOperations {
      */
     public static void upsertOpportunities(String accountName, List<String> oppNames) {
         List<Opportunity> oppoList = new List<Opportunity>();
-        Account acc = [SELECT Id, Name FROM Account WHERE Name = :accountName];
-        // Loop through each Opportunity name
-        for (String str : oppNames) {
-            Opportunity oppo = new Opportunity();
-            oppo.Name = str;
-            oppo.AccountId = acc.Id;
-            oppoList.add(oppo);
+        List<Account> accs = [SELECT Id, Name FROM Account WHERE Name = :accountName];
+        if (accs.isEmpty()) {
+            Account acc = new Account();
+            acc.Name = accountName;
+            insert acc;
+            for (String str : oppNames) {
+                Opportunity oppo = new Opportunity();
+                oppo.Name = str;
+                oppo.AccountId = acc.Id;
+                oppo.StageName = 'In progress';
+                oppo.CloseDate = Date.today();
+                oppoList.add(oppo);
         }
-        insert oppoList;
+        }        
+        upsert oppoList;
     }
     
     /**
